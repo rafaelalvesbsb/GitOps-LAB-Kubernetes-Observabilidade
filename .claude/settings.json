@@ -21,7 +21,9 @@
       "Bash(wsl -d Ubuntu-24.04 -- bash -c 'bash \"/mnt/c/Users/server/Documents/GitHub/GitOps-LAB-Kubernetes-Observabilidade/docs/pdf/check_vendor.sh\"')",
       "Read(//c/Users/**)",
       "Bash(whoami /priv)",
-      "Bash(net user *)"
+      "Bash(net user *)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\__test_server__\")",
+      "Bash(rmdir \"C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\__test_server__\")"
     ]
   }
 }
