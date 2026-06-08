@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wsl -d Ubuntu-24.04 -- bash -lc \"echo '--- docker info ---'; docker info 2>&1 | head -30; echo '--- docker ps ---'; docker ps 2>&1; echo '--- groups ---'; groups; echo '--- sudo test ---'; sudo -n true 2>&1 && echo 'passwordless sudo OK' || echo 'needs password'\")",
+      "Bash(wsl -d Ubuntu-24.04 -- bash -lc \"echo '--- ports 80/443/6443 ---'; sudo -n ss -ltnp 2>/dev/null | grep -E ':80 |:443 |:6443 ' || ss -ltn | grep -E ':80 |:443 |:6443 ' || echo 'none bound \\(or need sudo\\)'; echo '--- docker compose dirs \\(clues about existing setup\\) ---'; find / -maxdepth 4 -iname 'docker-compose*.y*ml' 2>/dev/null | head -20\")",
+      "Bash([ -f \"$M\" ])",
+      "Bash(wsl -d Ubuntu-24.04 -- bash -lc ' *)",
+      "Read(//c/Program Files \\(x86\\)/Microsoft/Edge/Application//**)",
+      "Read(//c/Program Files/Microsoft/Edge/**)",
+      "Read(//c/Program Files \\(x86\\)/Microsoft/**)",
+      "Read(//c/Program Files/**)",
+      "Bash(powershell -NoProfile -Command \"\\(Get-Item 'C:\\\\Program Files \\(x86\\)\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe'\\).VersionInfo.FileVersion\")",
+      "Bash(curl -sS -o /dev/null -w \"marked: HTTP %{http_code}\\\\n\" --max-time 10 https://cdn.jsdelivr.net/npm/marked/marked.min.js)",
+      "Bash(curl -sS -o /dev/null -w \"mermaid: HTTP %{http_code}\\\\n\" --max-time 10 https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --version)",
+      "Bash(wsl -d Ubuntu-24.04 -- bash -lc \"cd '/mnt/c/Users/server/Documents/GitHub/GitOps-LAB-Kubernetes-Observabilidade/docs/pdf' && python3 build_html.py\")",
+      "Bash(wsl -d Ubuntu-24.04 -- bash \"/mnt/c/Users/server/Documents/GitHub/GitOps-LAB-Kubernetes-Observabilidade/docs/pdf/fetch_vendor.sh\")",
+      "Bash(wsl -d Ubuntu-24.04 -- bash -c 'bash /mnt/c/Users/server/Documents/GitHub/GitOps-LAB-Kubernetes-Observabilidade/docs/pdf/fetch_vendor.sh')",
+      "Bash(wsl -d Ubuntu-24.04 -- bash -c \"cd '/mnt/c/Users/server/Documents/GitHub/GitOps-LAB-Kubernetes-Observabilidade/docs/pdf' && python3 build_html.py\")",
+      "Bash(wsl -d Ubuntu-24.04 -- bash -c ' *)",
+      "Bash(wsl -d Ubuntu-24.04 -- bash -c 'bash \"/mnt/c/Users/server/Documents/GitHub/GitOps-LAB-Kubernetes-Observabilidade/docs/pdf/check_vendor.sh\"')",
+      "Read(//c/Users/**)",
+      "Bash(whoami /priv)",
+      "Bash(net user *)"
+    ]
+  }
+}
