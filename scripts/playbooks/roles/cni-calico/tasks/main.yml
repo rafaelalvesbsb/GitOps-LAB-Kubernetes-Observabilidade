@@ -1,0 +1,15 @@
+---
+# Usa ~/.kube/config (já pertence ao usuário desde control-plane-init) — não precisa
+# de sudo, porque /etc/kubernetes/admin.conf é root:root e o usuário não tem acesso.
+
+- name: Verificar se o Calico já está aplicado
+  command: "kubectl --kubeconfig={{ ansible_env.HOME }}/.kube/config -n kube-system get daemonset calico-node"
+  register: calico_ds
+  failed_when: false
+  changed_when: false
+
+- name: Aplicar manifest do Calico
+  command: >
+    kubectl --kubeconfig={{ ansible_env.HOME }}/.kube/config apply
+    -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+  when: calico_ds.rc != 0

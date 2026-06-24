@@ -1,0 +1,43 @@
+---
+# Orquestra o bootstrap completo do cluster kubeadm em ordem.
+# Cada role é idempotente: rodar de novo não quebra um cluster já no ar.
+#
+# NOTA: não usamos "become" do Ansible neste lab — o sudo instalado nas VMs usa um
+# formato de prompt que o detector de become do Ansible não reconhece (trava
+# indefinidamente). Cada role escala privilégio manualmente via "sudo -S" + stdin.
+# Ver roles/common/tasks/main.yml para detalhes.
+
+- name: Preparação base em todos os nós do cluster Kubernetes
+  hosts: k8s_cluster
+  roles:
+    - common
+
+- name: Instalar manifest estático do kube-vip nos control-planes
+  hosts: control_plane
+  roles:
+    - kube-vip
+
+- name: Inicializar o primeiro control-plane (kubeadm init)
+  hosts: k8s-cp-01
+  roles:
+    - control-plane-init
+
+- name: Demais control-planes entram no cluster (HA)
+  hosts: "control_plane:!k8s-cp-01"
+  roles:
+    - control-plane-join
+
+- name: Workers entram no cluster
+  hosts: workers
+  roles:
+    - worker-join
+
+- name: Instalar CNI (Calico)
+  hosts: k8s-cp-01
+  roles:
+    - cni-calico
+
+- name: Configurar ferramentas e kubeconfig no bastion (mgmt-01)
+  hosts: mgmt
+  roles:
+    - mgmt-tools

@@ -1,0 +1,42 @@
+---
+- name: Garantir diretório de scripts de bootstrap
+  file:
+    path: "{{ ansible_env.HOME }}/.bootstrap"
+    state: directory
+    mode: "0700"
+
+- name: Renderizar script de instalação das ferramentas de gerenciamento
+  template:
+    src: mgmt-tools.sh.j2
+    dest: "{{ ansible_env.HOME }}/.bootstrap/mgmt-tools.sh"
+    mode: "0700"
+
+- name: Instalar kubectl/helm/kustomize/argocd-cli (via sudo -S)
+  shell: "sudo -S bash {{ ansible_env.HOME }}/.bootstrap/mgmt-tools.sh"
+  args:
+    stdin: "{{ ansible_become_password }}\n"
+  register: mgmt_tools_out
+  changed_when: "'MGMT_TOOLS_OK' in mgmt_tools_out.stdout"
+  failed_when: "'MGMT_TOOLS_OK' not in mgmt_tools_out.stdout"
+
+# admin.conf já foi copiado e chowned para o usuário normal em control-plane-init —
+# não precisa de root nem aqui nem no fetch abaixo.
+- name: Buscar kubeconfig do cp-01
+  fetch:
+    src: "/home/{{ hostvars[groups['control_plane'][0]]['ansible_user'] }}/.kube/config"
+    dest: /tmp/admin.conf
+    flat: true
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  run_once: true
+
+- name: Criar diretório .kube do usuário de gerenciamento
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    mode: "0700"
+
+- name: Instalar kubeconfig em mgmt-01
+  copy:
+    src: /tmp/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+    mode: "0600"

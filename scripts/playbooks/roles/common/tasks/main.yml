@@ -1,0 +1,26 @@
+---
+# Privilege escalation neste lab NÃO usa o "become" nativo do Ansible: o sudo
+# instalado nas VMs envolve o prompt customizado do Ansible num formato que o
+# protocolo de detecção de become não reconhece, travando toda automação.
+# Em vez disso, cada operação privilegiada roda via "sudo -S", recebendo a senha
+# pela própria stdin do módulo shell — testado manualmente antes de generalizar.
+
+- name: Garantir diretório de scripts de bootstrap
+  file:
+    path: "{{ ansible_env.HOME }}/.bootstrap"
+    state: directory
+    mode: "0700"
+
+- name: Renderizar script de preparação do SO e instalação do Kubernetes
+  template:
+    src: common.sh.j2
+    dest: "{{ ansible_env.HOME }}/.bootstrap/common.sh"
+    mode: "0700"
+
+- name: Executar preparação do SO + instalação kubeadm/kubelet/kubectl (via sudo -S)
+  shell: "sudo -S bash {{ ansible_env.HOME }}/.bootstrap/common.sh"
+  args:
+    stdin: "{{ ansible_become_password }}\n"
+  register: common_setup
+  changed_when: "'COMMON_SETUP_OK' in common_setup.stdout"
+  failed_when: "'COMMON_SETUP_OK' not in common_setup.stdout"

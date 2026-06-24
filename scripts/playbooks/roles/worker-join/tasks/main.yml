@@ -1,0 +1,13 @@
+---
+# Privilégio via "sudo -S" + stdin (ver roles/common para o motivo de não usar "become").
+
+- name: Verificar se este nó já faz parte do cluster
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubelet_conf
+
+- name: Join como worker
+  shell: "sudo -S {{ hostvars[groups['control_plane'][0]]['worker_join_cmd']['stdout'] }}"
+  args:
+    stdin: "{{ ansible_become_password }}\n"
+  when: not kubelet_conf.stat.exists

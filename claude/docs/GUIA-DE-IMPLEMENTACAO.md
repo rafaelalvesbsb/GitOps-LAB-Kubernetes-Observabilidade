@@ -6,6 +6,15 @@
 
 ---
 
+> ⚠️ **Fases 0, 1 e 2 abaixo estão desatualizadas** (assumem WSL2 + `kind`). O ambiente `dev`
+> real passou a ser um cluster `kubeadm` em 6 VMs Ubuntu no Hyper-V, com control-plane em HA.
+> Para o diagnóstico de ambiente real, o inventário das VMs e o script de bootstrap, veja
+> [`AMBIENTE-E-IMPLEMENTACAO.md`](./AMBIENTE-E-IMPLEMENTACAO.md). **A partir da Fase 3** (bootstrap
+> do ArgoCD) este guia volta a valer normalmente — só troque mentalmente "cluster kind" por
+> "cluster kubeadm já de pé".
+
+---
+
 ## 0. Diagnóstico do ambiente atual (já levantado)
 
 Antes de qualquer coisa, este é o estado real do host onde vamos rodar o ambiente `dev`:

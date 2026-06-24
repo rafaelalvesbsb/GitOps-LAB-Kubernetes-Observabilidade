@@ -1,0 +1,24 @@
+---
+# kube-vip precisa do manifest em /etc/kubernetes/manifests ANTES do kubeadm init/join,
+# porque o kubelet já observa esse diretório (static pods) desde o início do bootstrap —
+# é assim que o VIP fica de pé a tempo do apiserver vir ao ar atrás dele.
+# Privilégio via "sudo -S" + stdin (ver roles/common para o motivo de não usar "become").
+- name: Garantir diretório de scripts de bootstrap
+  file:
+    path: "{{ ansible_env.HOME }}/.bootstrap"
+    state: directory
+    mode: "0700"
+
+- name: Renderizar manifest static pod do kube-vip (local, sem privilégio)
+  template:
+    src: kube-vip.yaml.j2
+    dest: "{{ ansible_env.HOME }}/.bootstrap/kube-vip.yaml"
+    mode: "0644"
+
+- name: Instalar manifest do kube-vip em /etc/kubernetes/manifests (via sudo -S)
+  shell: |
+    sudo -S mkdir -p /etc/kubernetes/manifests
+    sudo -S cp {{ ansible_env.HOME }}/.bootstrap/kube-vip.yaml /etc/kubernetes/manifests/kube-vip.yaml
+  args:
+    stdin: "{{ ansible_become_password }}\n{{ ansible_become_password }}\n"
+  changed_when: true

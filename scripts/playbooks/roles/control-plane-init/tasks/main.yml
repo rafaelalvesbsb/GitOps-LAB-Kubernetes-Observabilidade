@@ -1,0 +1,72 @@
+---
+# Privilégio via "sudo -S" + stdin (ver roles/common para o motivo de não usar "become").
+
+- name: Verificar se este nó já inicializou o cluster
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: admin_conf
+
+- name: kubeadm init (somente na primeira execução)
+  shell: >
+    sudo -S kubeadm init
+    --control-plane-endpoint={{ kube_vip_address }}:6443
+    --upload-certs
+    --pod-network-cidr={{ pod_network_cidr }}
+  args:
+    stdin: "{{ ansible_become_password }}\n"
+  register: kubeadm_init_out
+  when: not admin_conf.stat.exists
+
+- name: Salvar saída do kubeadm init para auditoria
+  copy:
+    content: "{{ kubeadm_init_out.stdout }}"
+    dest: "{{ ansible_env.HOME }}/.bootstrap/kubeadm-init.log"
+    mode: "0600"
+  when: kubeadm_init_out is defined and kubeadm_init_out.stdout is defined
+
+- name: Criar diretório .kube do usuário
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    mode: "0700"
+
+- name: Copiar admin.conf para o usuário local (arquivo é root:root 600)
+  shell: |
+    sudo -S cp /etc/kubernetes/admin.conf {{ ansible_env.HOME }}/.kube/config
+    sudo -S chown {{ ansible_user }}:{{ ansible_user }} {{ ansible_env.HOME }}/.kube/config
+  args:
+    stdin: "{{ ansible_become_password }}\n{{ ansible_become_password }}\n"
+  changed_when: true
+
+# Tokens de join expiram em 24h por padrão — geramos um novo a cada execução do
+# playbook para que os outros nós sempre tenham um comando válido para usar.
+- name: Gerar comando de join para workers
+  shell: "sudo -S kubeadm token create --print-join-command"
+  args:
+    stdin: "{{ ansible_become_password }}\n"
+  register: worker_join_cmd
+  changed_when: false
+
+- name: Gerar nova certificate-key para join de control-plane adicionais
+  shell: "sudo -S kubeadm init phase upload-certs --upload-certs"
+  args:
+    stdin: "{{ ansible_become_password }}\n"
+  register: cert_key_out
+  changed_when: false
+
+- name: Extrair certificate-key da saída
+  set_fact:
+    cert_key: "{{ cert_key_out.stdout_lines[-1] }}"
+
+# kubeadm >= 1.29 dá ao "admin.conf" um RBAC reduzido (grupo "kubeadm:cluster-admins",
+# não "system:masters"). Isso é insuficiente para o kube-vip gerenciar Lease objects
+# (coordination.k8s.io) durante a eleição de líder — sem este binding extra, o kube-vip
+# fica em CrashLoopBackOff e o VIP nunca é anunciado.
+- name: Garantir ClusterRoleBinding extra para o usuário kubernetes-admin (kube-vip)
+  command: >
+    kubectl --kubeconfig={{ ansible_env.HOME }}/.kube/config
+    create clusterrolebinding kube-vip-admin-fix
+    --clusterrole=cluster-admin --user=kubernetes-admin
+  register: rbac_fix
+  failed_when: rbac_fix.rc != 0 and 'already exists' not in rbac_fix.stderr
+  changed_when: rbac_fix.rc == 0

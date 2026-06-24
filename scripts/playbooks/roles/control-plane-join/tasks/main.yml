@@ -1,0 +1,32 @@
+---
+# Privilégio via "sudo -S" + stdin (ver roles/common para o motivo de não usar "become").
+
+- name: Verificar se este nó já faz parte do cluster
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubelet_conf
+
+- name: Join como control-plane adicional (HA)
+  shell: >
+    sudo -S {{ hostvars[groups['control_plane'][0]]['worker_join_cmd']['stdout'] }}
+    --control-plane
+    --certificate-key {{ hostvars[groups['control_plane'][0]]['cert_key'] }}
+  args:
+    stdin: "{{ ansible_become_password }}\n"
+  when: not kubelet_conf.stat.exists
+
+- name: Criar diretório .kube do usuário
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    mode: "0700"
+  when: not kubelet_conf.stat.exists
+
+- name: Copiar admin.conf para o usuário local
+  shell: |
+    sudo -S cp /etc/kubernetes/admin.conf {{ ansible_env.HOME }}/.kube/config
+    sudo -S chown {{ ansible_user }}:{{ ansible_user }} {{ ansible_env.HOME }}/.kube/config
+  args:
+    stdin: "{{ ansible_become_password }}\n{{ ansible_become_password }}\n"
+  when: not kubelet_conf.stat.exists
+  changed_when: true

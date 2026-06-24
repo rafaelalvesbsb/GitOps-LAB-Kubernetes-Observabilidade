@@ -1,0 +1,14 @@
+# Patch específico do ambiente dev — ver tabela dev↔prod em claude/docs/ARQUITETURA.md (seção 6).
+configs:
+  params:
+    # TLS termina no Ingress local (cert self-signed) — não no próprio ArgoCD.
+    server.insecure: true
+
+server:
+  replicas: 1
+
+redis:
+  enabled: true
+
+redis-ha:
+  enabled: false

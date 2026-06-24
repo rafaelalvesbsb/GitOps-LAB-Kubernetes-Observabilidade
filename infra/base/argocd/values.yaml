@@ -1,0 +1,36 @@
+# Valores Helm comuns do ArgoCD (cloud-agnostic, válidos para dev e prod).
+# O que muda por ambiente vive em infra/overlays/<env>/argocd/values-patch.yaml.
+# Chart: https://github.com/argoproj/argo-helm (argo-cd)
+global:
+  domain: argocd.local.dev
+
+configs:
+  cm:
+    timeout.reconciliation: 180s
+    # Necessário porque infra/base/* usa "helmCharts:" dentro do kustomization.yaml
+    # para consumir charts da comunidade (ingress-nginx, cert-manager, etc.) por baixo
+    # do Kustomize — ver ARQUITETURA.md seção 4.
+    kustomize.buildOptions: --enable-helm --load-restrictor LoadRestrictionsNone
+  rbac:
+    policy.default: role:readonly
+
+server:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+repoServer:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+notifications:
+  enabled: true

@@ -1,0 +1,27 @@
+#!/bin/bash
+# Instala kubectl/helm/kustomize/argocd-cli em /usr/local/bin. Roda como root via
+# "sudo -S bash mgmt-tools.sh" — evita os instaladores oficiais (get-helm-3, etc.)
+# porque eles chamam "sudo" internamente, o que quebraria sem terminal interativo.
+set -e
+
+apt-get update -qq
+apt-get install -y -qq curl apt-transport-https ca-certificates gnupg jq
+
+KUBECTL_STABLE=$(curl -fsSL "https://dl.k8s.io/release/stable-1.{{ kube_version.split('.')[1] }}.txt" 2>/dev/null || curl -fsSL https://dl.k8s.io/release/stable.txt)
+curl -fsSL -o /usr/local/bin/kubectl "https://dl.k8s.io/release/${KUBECTL_STABLE}/bin/linux/amd64/kubectl"
+chmod +x /usr/local/bin/kubectl
+
+curl -fsSL -o /tmp/helm.tar.gz "https://get.helm.sh/helm-v3.15.0-linux-amd64.tar.gz"
+tar -zxf /tmp/helm.tar.gz -C /tmp
+install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm
+rm -rf /tmp/helm.tar.gz /tmp/linux-amd64
+
+curl -fsSL -o /tmp/kustomize.tar.gz "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz"
+tar -zxf /tmp/kustomize.tar.gz -C /tmp
+install -m 0755 /tmp/kustomize /usr/local/bin/kustomize
+rm -f /tmp/kustomize.tar.gz /tmp/kustomize
+
+curl -fsSL -o /usr/local/bin/argocd "https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64"
+chmod +x /usr/local/bin/argocd
+
+echo "MGMT_TOOLS_OK"

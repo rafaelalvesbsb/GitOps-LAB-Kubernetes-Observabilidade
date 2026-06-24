@@ -1,0 +1,11 @@
+# Credenciais reais de inventário (IPs/usuários/senhas das VMs) — nunca versionar
+scripts/inventory.ini
+scripts/*.retry
+
+# Kubeconfig e artefatos de bootstrap
+*.kubeconfig
+admin.conf
+kubeconfig
+
+# Logs locais de execução
+*.log

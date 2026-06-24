@@ -1,0 +1,19 @@
+# Valores comuns. Retenção/HA/recursos específicos do ambiente vão no overlay
+# (ver claude/docs/ARQUITETURA.md seção 6).
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+grafana:
+  defaultDashboardsEnabled: true
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+    datasources:
+      enabled: true
+
+alertmanager:
+  enabled: true

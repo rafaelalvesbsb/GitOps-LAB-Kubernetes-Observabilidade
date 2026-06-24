@@ -1,0 +1,15 @@
+# Valores comuns (cloud-agnostic). O que muda por ambiente vive no overlay.
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  config:
+    hsts: "true"
+    ssl-redirect: "true"

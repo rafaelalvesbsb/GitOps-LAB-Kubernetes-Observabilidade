@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../base/ingress-nginx
+patches:
+  # Sem LoadBalancer cloud nem MetalLB no lab: o controller roda como DaemonSet com
+  # hostNetwork nos workers rotulados "ingress-ready=true", ocupando direto as portas
+  # 80/443 dos nós. Ver claude/docs/ARQUITETURA.md seção 5 (cloud-agnostic) — em prod
+  # isso troca para Service type=LoadBalancer.
+  - target:
+      kind: Deployment
+      name: ingress-nginx-controller
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/hostNetwork
+        value: true
+      - op: replace
+        path: /spec/template/spec/dnsPolicy
+        value: ClusterFirstWithHostNet
+      - op: add
+        path: /spec/template/spec/nodeSelector
+        value:
+          ingress-ready: "true"
+      - op: replace
+        path: /spec/replicas
+        value: 2
