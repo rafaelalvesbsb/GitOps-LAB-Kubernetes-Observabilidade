@@ -1,0 +1,21 @@
+# Raiz do ambiente dev. Aplicar uma vez manualmente (kubectl apply -f); a partir daqui
+# o ArgoCD reconcilia tudo dentro de argocd/apps/dev/ automaticamente — nenhum outro
+# "kubectl apply"/"helm install" deve ser feito manualmente no cluster.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-of-apps-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rafaelalvesbsb/GitOps-LAB-Kubernetes-Observabilidade.git
+    targetRevision: main
+    path: argocd/apps/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
