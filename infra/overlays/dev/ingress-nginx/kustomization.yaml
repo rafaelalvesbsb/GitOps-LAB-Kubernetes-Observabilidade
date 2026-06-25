@@ -26,3 +26,12 @@ patches:
       - op: replace
         path: /spec/replicas
         value: 2
+  # Tráfego chega via hostNetwork/hostPort direto no nó, não pela Service — sem isso o
+  # ArgoCD espera para sempre por um EXTERNAL-IP que nunca chega (não há MetalLB).
+  - target:
+      kind: Service
+      name: ingress-nginx-controller
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: ClusterIP
