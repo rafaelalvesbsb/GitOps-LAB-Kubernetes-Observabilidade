@@ -29,3 +29,18 @@
 # (192.168.1.108/109) e repassa qualquer outro domínio para o DNS público normal — não
 # quebra o acesso à internet do PC.
 # ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# Duas pegadinhas comuns depois de configurar a Opção B (verificadas no Windows):
+#
+# 1. Servidores DNS IPv6 públicos (vindos de auto-config da rede) podem continuar
+#    configurados na interface e "ganhar a corrida" contra o DNS IPv4 que você
+#    configurou, fazendo o NXDOMAIN aparecer mesmo com o IPv4 correto. Se isso
+#    acontecer, desative IPv6 na interface (Windows: Disable-NetAdapterBinding
+#    -ComponentID ms_tcpip6) ou limpe os servidores DNS IPv6 dela.
+# 2. Navegadores modernos (Edge/Chrome) têm "DNS Seguro" (DoH) ligado por padrão,
+#    que ignora o DNS do sistema operacional inteiramente. Em
+#    edge://settings/privacy (ou chrome://settings/security), em "Usar DNS
+#    seguro", deixe em "Com seu provedor de serviço atual" — nunca fixo em
+#    Cloudflare/Google, senão volta a cair no domínio público local.dev/etc.
+# ----------------------------------------------------------------------------
