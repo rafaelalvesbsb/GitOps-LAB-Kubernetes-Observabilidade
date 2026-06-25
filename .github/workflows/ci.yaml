@@ -4,8 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - "sample-app/**"
+      - "sample-app/src/**"
+      - "sample-app/Dockerfile"
       - ".github/workflows/ci.yaml"
+    # NÃO inclui sample-app/k8s/** de propósito: o job promote-dev só muda a tag da
+    # imagem em sample-app/k8s/overlays/dev/kustomization.yaml — se esse caminho
+    # disparasse o workflow de novo, cada promoção criaria outra promoção (loop).
 
 permissions:
   contents: write
