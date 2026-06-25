@@ -23,6 +23,15 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: ingress-nginx
+        # O controller roda com hostNetwork (sem MetalLB no lab — ver
+        # infra/overlays/dev/ingress-nginx) — o tráfego chega com o IP do NÓ, não um IP
+        # de pod do namespace ingress-nginx, então o namespaceSelector acima por si só
+        # não cobre esse tráfego. ipBlock com os IPs dos workers (nodeSelector
+        # ingress-ready=true) resolve isso sem abrir pra LAN inteira.
+        - ipBlock:
+            cidr: 192.168.1.108/32
+        - ipBlock:
+            cidr: 192.168.1.109/32
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
