@@ -26,6 +26,15 @@ patches:
       - op: replace
         path: /spec/replicas
         value: 2
+      # maxSurge: 0 — com hostPort 80/443 e só 2 nós ingress-ready, um 3º pod (surge
+      # padrão) nunca encontra onde rodar e trava o rollout para sempre.
+      - op: add
+        path: /spec/strategy
+        value:
+          type: RollingUpdate
+          rollingUpdate:
+            maxSurge: 0
+            maxUnavailable: 1
   # Tráfego chega via hostNetwork/hostPort direto no nó, não pela Service — sem isso o
   # ArgoCD espera para sempre por um EXTERNAL-IP que nunca chega (não há MetalLB).
   - target:
