@@ -43,6 +43,12 @@ metadata:
   namespace: monitoring
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    # Prometheus não tem login nativo — protegido via Basic Auth no Ingress.
+    # Secret "prometheus-basic-auth" (htpasswd) é aplicado direto no cluster, nunca
+    # commitado no Git (ver claude/docs/AMBIENTE-E-IMPLEMENTACAO.md / handoff.md).
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: prometheus-basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Autenticação necessária"
 spec:
   ingressClassName: nginx
   tls:

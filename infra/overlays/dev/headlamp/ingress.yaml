@@ -18,6 +18,11 @@ metadata:
   namespace: dashboard
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    # Headlamp usa token de ServiceAccount para autorização (RBAC), não login — Basic
+    # Auth aqui é uma camada extra de proteção no Ingress (mesmo padrão do Prometheus).
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: headlamp-basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Autenticação necessária"
 spec:
   ingressClassName: nginx
   tls:
