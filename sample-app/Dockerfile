@@ -1,6 +1,6 @@
 # Build estático, sem CGO — permite usar "scratch" como imagem final (sem shell, sem
 # pacotes de SO, superfície de ataque mínima e poucos achados de CVE no Trivy).
-FROM golang:1.22-alpine AS build
+FROM golang:1.26.4-alpine AS build
 WORKDIR /src
 COPY src/go.mod ./
 COPY src/*.go ./
