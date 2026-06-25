@@ -18,12 +18,15 @@ metadata:
   labels:
     pod-security.kubernetes.io/enforce: baseline
 ---
+# Exceção deliberada: prometheus-node-exporter precisa de hostNetwork/hostPID/hostPath
+# (proc, sys, root) para ler métricas de kernel do host — é assim que node-exporter
+# funciona em qualquer cluster, não é peculiaridade deste lab.
 apiVersion: v1
 kind: Namespace
 metadata:
   name: monitoring
   labels:
-    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce: privileged
 ---
 apiVersion: v1
 kind: Namespace
