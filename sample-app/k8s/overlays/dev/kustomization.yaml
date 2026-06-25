@@ -2,11 +2,12 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: apps
 resources:
-  - ../../base
-  - ingress.yaml
-images:
+- ../../base
+- ingress.yaml
   # O workflow de CI atualiza o newTag aqui (kustomize edit set image) a cada push —
   # é assim que o ArgoCD descobre a nova versão a sincronizar. Ver
   # .github/workflows/ci.yaml.
-  - name: ghcr.io/rafaelalvesbsb/sample-app
-    newTag: latest
+images:
+- name: ghcr.io/rafaelalvesbsb/sample-app
+  newName: ghcr.io/rafaelalvesbsb/sample-app
+  newTag: dc8f0a8de024285dd7ff00365b5b8cfe07f89be1
