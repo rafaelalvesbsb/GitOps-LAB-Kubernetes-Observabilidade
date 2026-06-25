@@ -1,5 +1,14 @@
 # Valores comuns. Retenção/HA/recursos específicos do ambiente vão no overlay
 # (ver claude/docs/ARQUITETURA.md seção 6).
+
+# Mesmo problema do ingress-nginx: o webhook depende de Jobs com hooks do Helm
+# (pre/post-install) para gerar/aplicar o certificado, e o ArgoCD não reproduz esse
+# ciclo de vida corretamente — RBAC/Role do webhook fica "None" (nunca sincroniza) e a
+# Application trava em "Progressing" para sempre. Desabilitado por isso.
+prometheusOperator:
+  admissionWebhooks:
+    enabled: false
+
 prometheus:
   prometheusSpec:
     serviceMonitorSelectorNilUsesHelmValues: false
