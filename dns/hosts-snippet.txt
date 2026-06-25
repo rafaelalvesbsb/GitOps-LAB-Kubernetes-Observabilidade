@@ -1,0 +1,11 @@
+# Adicione este bloco ao /etc/hosts (Linux/Mac) ou C:\Windows\System32\drivers\etc\hosts
+# (Windows, como Administrador) da máquina de onde você vai abrir o navegador.
+#
+# <IP> = IP de qualquer worker rotulado "ingress-ready=true" (lab05 ou lab06) — o
+# ingress-nginx roda como DaemonSet com hostNetwork nesses nós (ver
+# infra/overlays/dev/ingress-nginx/kustomization.yaml).
+
+192.168.1.108 argocd.local.dev
+192.168.1.108 grafana.local.dev
+192.168.1.108 prometheus.local.dev
+192.168.1.108 dashboard.local.dev

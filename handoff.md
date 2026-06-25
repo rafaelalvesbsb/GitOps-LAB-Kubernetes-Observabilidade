@@ -2,7 +2,7 @@
 
 > Documento de continuidade. Objetivo: qualquer IA ou desenvolvedor que abra este repositório deve conseguir entender o estado do projeto e continuar o trabalho sem precisar re-perguntar o que já foi decidido.
 >
-> Última atualização: 2026-06-24 (cluster kubeadm HA real está **no ar e validado** — 5 nós Ready)
+> Última atualização: 2026-06-25 (App of Apps completo — **9/9 Applications Synced/Healthy**, todos os 4 endpoints HTTPS validados)
 
 ---
 
@@ -67,36 +67,35 @@ GitOps-LAB-Kubernetes-Observabilidade/
 └── handoff.md                       # este arquivo
 ```
 
-**Não existe ainda** (apenas especificado nos docs): `infra/base/`, `infra/overlays/{dev,prod}/`, `argocd/apps/`, `observability/`, `dns/`, `github-actions/.github/workflows/`, `sample-app/`, `scripts/`, `Makefile`, `docs/RUNBOOK.md`.
+**Já existe e está implantado no cluster** (não apenas especificado): `infra/base/{namespaces,ingress-nginx,cert-manager,monitoring,headlamp,network-policies,storage,argocd}/`, `infra/overlays/dev/{namespaces,ingress-nginx,cert-manager,monitoring,headlamp,network-policies,storage,argocd,argocd-ingress}/`, `argocd/apps/{app-of-apps-dev.yaml,dev/*.yaml}`, `scripts/` (Ansible).
+
+**Ainda não existe**: `observability/` (dashboards/alertas extras versionados além do que o chart já traz), `dns/`, `github-actions/.github/workflows/`, `sample-app/`, `Makefile`, `docs/RUNBOOK.md`, `infra/{base,overlays}/prod/`.
 
 ---
 
 ## 4. Funcionalidades Já Feitas
 
 - ✅ Especificação técnica completa e revisada (PROMPT.md, ARQUITETURA.md, GUIA-DE-IMPLEMENTACAO.md).
-- ✅ Diagrama de arquitetura e fluxo de mudança (Mermaid) documentados.
-- ✅ Tabela de diferenças dev↔prod (domínio, TLS, réplicas, storage, PSS, etc.).
-- ✅ `clusters/dev/kind-config.yaml` pronto (3 nós, portas 80/443/6443 mapeadas).
-- ✅ `clusters/dev/README.md` e `clusters/prod/README.md` com instruções/requisitos.
+- ✅ Cluster `kubeadm` HA real no ar (6 VMs Hyper-V): 3 control-plane + 2 workers `Ready`, VIP via kube-vip, Calico, `mgmt-01` com kubectl/helm/kustomize/argocd-cli.
+- ✅ ArgoCD instalado (Helm manual, ver seção 7) e **App of Apps completo aplicado**: `argocd/apps/app-of-apps-dev.yaml` → 8 Applications filhas, **todas `Synced/Healthy`**:
+  `namespaces-dev`, `storage-dev`, `network-policies-dev`, `cert-manager-dev`, `ingress-nginx-dev`, `monitoring-dev`, `headlamp-dev`, `argocd-ingress-dev`.
+- ✅ 4 endpoints HTTPS validados de ponta a ponta (`curl` com `--resolve`, certificado self-signed do cert-manager, todos via Ingress real): `argocd.local.dev` (200), `dashboard.local.dev` (200), `grafana.local.dev` (302 — redirect normal de login), `prometheus.local.dev` (302).
+- ✅ `local-path-provisioner` como StorageClass default (bare-metal não vem com nenhuma).
+- ✅ NetworkPolicy default-deny + 3 exceções no namespace `apps` (ainda sem nenhuma app real rodando lá — Fase 7/sample-app pendente).
 - ✅ Geração de PDF consolidado da documentação (`claude/docs/pdf/`).
-- ✅ Diagnóstico do host original feito (Windows Server 2025 + WSL2 Ubuntu-24.04) — **agora obsoleto, ver seção 7**.
 
 ## 5. Funcionalidades Pendentes
 
-Nada de infraestrutura foi implementado ainda. Pendente (na ordem do guia):
-
-- [x] Fase 0/1/2 (substituídas) — automação Ansible (`scripts/`) executada com sucesso contra as 6 VMs reais. Cluster `kubeadm` HA **no ar**: `kubectl get nodes` mostra 5 nós `Ready` (lab02/03/04 control-plane, lab05/06 workers), todos os pods de `kube-system` `Running` (Calico, CoreDNS, kube-vip), VIP `192.168.1.110:6443` respondendo. `mgmt-01` configurado com kubectl/helm/kustomize/argocd-cli e kubeconfig pronto.
-- [x] Fase 3 — ArgoCD instalado via Helm em `infra/base/argocd/values.yaml` + `infra/overlays/dev/argocd/values-patch.yaml` (padrão base/overlay do projeto). Namespace `argocd` com label PSS `baseline`. 7/7 pods `Running`, `argocd-server` acessível via `kubectl -n argocd port-forward svc/argocd-server 8081:443` (HTTP 200 confirmado). Senha inicial do `admin` recuperada com sucesso (não documentada aqui por segurança — recuperar de novo com `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`, e **trocar/deletar esse secret** assim que possível, conforme recomendação oficial do ArgoCD).
-- [ ] Fase 1 (GitOps) — criar o restante do esqueleto de diretórios (`argocd/apps/`, `observability/`, `dns/`, `Makefile`, etc.) conforme `claude/PROMPT.md` — só `infra/base/argocd` e `infra/overlays/dev/argocd` existem até agora.
-- [ ] Fase 4 — aplicar App of Apps (ainda não existe `argocd/apps/app-of-apps-dev.yaml`; falta criar os manifests de `ingress-nginx`, `cert-manager`, `monitoring`, `headlamp`, `network-policies`, `secrets-management`, `backup` em `infra/base/` antes disso fazer sentido)
-- [ ] Fase 4 — aplicar App of Apps (Synced/Healthy)
-- [ ] Fase 5 — DNS local + HTTPS/TLS (`*.local.dev`)
-- [ ] Fase 6 — observabilidade como código (dashboards/alertas)
-- [ ] Fase 7 — sample-app + pipeline CI completo
-- [ ] Fase 8 — hardening de segurança (NetworkPolicy, PSS, secrets)
-- [ ] Fase 9 — backup/restore com Velero testado
-- [ ] Fase 10 — `smoke-test.sh` + `make` idempotente
-- [ ] Fase 11 — overlay prod + fluxo de promoção dev→prod via PR
+- [x] Fase 0/1/2 (substituídas) — cluster kubeadm HA via Ansible.
+- [x] Fase 3 — ArgoCD bootstrap manual.
+- [x] Fase 4 — App of Apps aplicado, 9/9 Applications Synced/Healthy.
+- [x] Fase 5 — DNS local + HTTPS/TLS validados (via `curl --resolve`; `/etc/hosts` real do operador ainda não configurado — ver seção 7).
+- [~] Fase 6 — observabilidade: kube-prometheus-stack rodando com seus dashboards/alertas **padrão do chart**; ainda faltam dashboards/`PrometheusRule` customizados versionados em `observability/` (PodCrashLooping, CertificateExpiringSoon, ArgoCDSyncFailed específicos do PROMPT.md).
+- [ ] Fase 7 — sample-app + pipeline CI completo (GitHub Actions, GHCR, Trivy, cosign) — nada disso existe ainda.
+- [ ] Fase 8 — hardening adicional: Sealed Secrets/External Secrets Operator (zero secrets hoje, mas também zero segredo de app para gerenciar ainda), validação formal de NetworkPolicy com pod de teste.
+- [ ] Fase 9 — backup/restore com Velero testado.
+- [ ] Fase 10 — `smoke-test.sh` + `Makefile` (`make up/down/status`) — não existe Makefile ainda.
+- [ ] Fase 11 — overlay prod + fluxo de promoção dev→prod via PR.
 
 ---
 
@@ -150,10 +149,25 @@ Importante para quem for reexecutar/depurar `scripts/playbooks/`:
 3. **`kube-vip` em `CrashLoopBackOff` nos control-planes que entraram via `kubeadm join`** (lab03/lab04): o kubeadm (≥1.29) só gera `/etc/kubernetes/super-admin.conf` (acesso `system:masters`) no nó do `kubeadm init` — nos joins, esse arquivo nunca é criado, e o `hostPath` do kube-vip criava um arquivo vazio (semântica `FileOrCreate`). **Solução:** o manifesto do kube-vip usa `/etc/kubernetes/admin.conf` (presente em todos os nós) e a role `control-plane-init` cria um `ClusterRoleBinding` extra (`kube-vip-admin-fix`, `cluster-admin` → user `kubernetes-admin`) porque o `admin.conf` do kubeadm moderno só vem com o grupo `kubeadm:cluster-admins`, que por si só não foi suficiente para o kube-vip gerenciar `Lease` objects.
 4. **403 transitório do CDN do `pkgs.k8s.io`** ao baixar a chave do repositório simultaneamente nos 5 nós (rate limit por estarem atrás do mesmo IP do Hyper-V). Corrigido com `curl --retry 5 --retry-delay 3 --retry-all-errors`.
 
+### Bugs reais do ArgoCD/GitOps encontrados e corrigidos (2026-06-25, Fase 4)
+
+Importante para quem for adicionar novos componentes Helm via ArgoCD neste cluster:
+
+5. **`helm template` (usado pelo `helmCharts:` do Kustomize) ignora a pasta `crds/` dos charts** — limitação conhecida do Helm, não um bug do projeto. Charts que dependem disso (kube-prometheus-stack) nunca teriam suas CRDs criadas via Kustomize+helmCharts. **Solução:** `monitoring-dev` usa fonte **Helm nativa multi-source do ArgoCD** (`argocd/apps/dev/monitoring.yaml`: chart + valueFiles do nosso Git + um terceiro source Kustomize só para o Ingress) em vez de Kustomize. `cert-manager` não precisou disso porque seu chart tem um flag `crds.enabled` que contorna o problema.
+6. **Webhooks de admissão (ingress-nginx e kube-prometheus-stack) dependem de Jobs com `helm.sh/hook` para gerar/aplicar certificado TLS.** O ArgoCD interpreta parcialmente esses hooks mas não reproduz o ciclo de vida real do Helm — o Job de "patch" do CA nunca roda corretamente, deixando o webhook com certificado não confiável (`x509: certificate signed by unknown authority`), o que trava a criação de **qualquer** recurso no cluster (não só do próprio chart) enquanto o webhook existir. **Solução:** `controller.admissionWebhooks.enabled: false` (ingress-nginx) e `prometheusOperator.admissionWebhooks.enabled: false` (kube-prometheus-stack). Não é crítico para um lab.
+7. **Pod Security `baseline` bloqueia `hostNetwork`/`hostPort`/`hostPID`/`hostPath`** — necessários para o `ingress-nginx-controller` (sem MetalLB, expõe 80/443 direto no host) e para o `prometheus-node-exporter` (lê métricas de kernel do host). **Solução:** os namespaces `ingress-nginx` e `monitoring` usam PSS `privileged` (exceção deliberada e documentada em `infra/base/namespaces/namespaces.yaml`); os demais namespaces continuam `baseline`.
+8. **`Service type: LoadBalancer` do ingress-nginx nunca sai de `EXTERNAL-IP <pending>`** sem MetalLB/LB de nuvem, e o ArgoCD espera por isso indefinidamente, travando a Application em "Progressing" para sempre. **Solução:** patch para `type: ClusterIP` no overlay dev (tráfego chega via hostNetwork, a Service não precisa expor nada externamente).
+9. **Rollout do `Deployment` do ingress-nginx travava com 1 pod `Pending` eterno**: a estratégia padrão (`maxSurge: 25%`) tenta criar um 3º pod durante qualquer rolling update, mas com `hostPort` e só 2 nós `ingress-ready`, esse 3º pod nunca tem onde rodar. **Solução:** `maxSurge: 0, maxUnavailable: 1` no patch do Deployment.
+10. **CRDs do prometheus-operator são tão grandes que o `kubectl apply` client-side (padrão) excede o limite de 262144 bytes da annotation `last-applied-configuration`** em re-aplicações. **Solução:** `ServerSideApply=true` no `syncOptions` da Application — mas se o CRD já foi criado uma vez via client-side antes dessa flag existir, é preciso remover manualmente a annotation antiga (`kubectl annotate crd <nome> kubectl.kubernetes.io/last-applied-configuration-`) uma única vez para desbloquear.
+11. **CRDs (ServiceMonitor/PrometheusRule) usadas por OUTRA Application (ingress-nginx) antes de existirem** — `SkipDryRunOnMissingResource=true` no `syncOptions` evita que o sync falhe permanentemente enquanto a CRD não existe; o `selfHeal` corrige automaticamente assim que a CRD aparece.
+12. **Nomes de Service errados no Ingress do Grafana/Prometheus** — copiados de um plano anterior (`kube-prometheus-stack-*`) que usava `releaseName` fixo via Kustomize; ao migrar para fonte Helm nativa do ArgoCD, o release passou a se chamar `monitoring-dev` (nome da Application), então os Services reais são `monitoring-dev-grafana` e `monitoring-dev-kube-promet-prometheus`. Sempre confirmar `kubectl get svc -n <ns>` antes de escrever o Ingress.
+13. **Truque operacional:** depois de editar `argocd/apps/dev/*.yaml`, é preciso `kubectl patch application app-of-apps-dev -n argocd --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'` para o spec da Application filha atualizar — e depois um sync explícito (`{"operation":{"sync":{"revision":"HEAD","prune":true}}}'`) se a automação não pegar sozinha rápido o suficiente.
+
 ### Pendente
 
 - Trocar as senhas padrão das VMs por algo seguro / migrar para chave SSH (o acesso por chave já existe para um usuário de automação: `~/.ssh/lab_gitops_key.pub` foi autorizado em `~/.ssh/authorized_keys` de todos os 6 nós).
-- Seguir `GUIA-DE-IMPLEMENTACAO.md` a partir da Fase 3 (bootstrap do ArgoCD) — é o próximo passo real agora que o cluster está de pé.
+- Configurar `/etc/hosts` real (ou DNS) na máquina do operador — hoje a validação foi feita com `curl --resolve`, ver `dns/hosts-snippet.txt`.
+- Deletar o secret `argocd-initial-admin-secret` depois de guardar a senha em outro lugar seguro (recomendação oficial do ArgoCD).
 
 ---
 
