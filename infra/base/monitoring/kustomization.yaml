@@ -1,3 +1,8 @@
+# ATENÇÃO: não usado pelo overlay dev — "helm template" (kustomize helmCharts:) ignora
+# a pasta crds/ deste chart, então as CRDs do prometheus-operator nunca seriam criadas.
+# overlays/dev/monitoring usa fonte Helm nativa do ArgoCD em vez disso (ver
+# argocd/apps/dev/monitoring.yaml). Mantido aqui só de referência para um futuro
+# overlay de prod, que precisará do mesmo tratamento.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: monitoring

@@ -1,3 +1,5 @@
+# Fonte Helm nativa (não Kustomize) — necessário porque "helm template" ignora a
+# pasta crds/ do chart kube-prometheus-stack. Ver infra/base/monitoring/kustomization.yaml.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -7,10 +9,21 @@ metadata:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
-  source:
-    repoURL: https://github.com/rafaelalvesbsb/GitOps-LAB-Kubernetes-Observabilidade.git
-    targetRevision: main
-    path: infra/overlays/dev/monitoring
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 65.5.1
+      helm:
+        valueFiles:
+          - $values/infra/base/monitoring/values.yaml
+          - $values/infra/overlays/dev/monitoring/values-patch.yaml
+    - repoURL: https://github.com/rafaelalvesbsb/GitOps-LAB-Kubernetes-Observabilidade.git
+      targetRevision: main
+      ref: values
+    # Certificate + Ingress do Grafana/Prometheus (Kustomize puro, sem helmCharts).
+    - repoURL: https://github.com/rafaelalvesbsb/GitOps-LAB-Kubernetes-Observabilidade.git
+      targetRevision: main
+      path: infra/overlays/dev/monitoring
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
@@ -21,8 +34,3 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-      # CRDs (ServiceMonitor/PrometheusRule) e os recursos que as usam vêm juntos no
-      # mesmo chart — sem isso, o primeiro sync falha porque a CRD ainda não existe
-      # no momento do dry-run. selfHeal corrige no próximo ciclo de qualquer forma,
-      # mas isso evita o erro/retry inicial.
-      - SkipDryRunOnMissingResource=true

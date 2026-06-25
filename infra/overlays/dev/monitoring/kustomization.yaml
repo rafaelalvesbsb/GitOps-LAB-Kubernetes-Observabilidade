@@ -1,14 +1,10 @@
+# O chart do kube-prometheus-stack NÃO é mais renderizado aqui via Kustomize: "helm
+# template" (usado pelo helmCharts: do Kustomize) ignora a pasta crds/ dos charts —
+# limitação conhecida do Helm — e esse chart não tem um flag "crds.enabled" como o
+# cert-manager para contornar isso. Por isso o chart é instalado via fonte Helm nativa
+# do ArgoCD (ver argocd/apps/dev/monitoring.yaml), e este overlay cuida só do Ingress.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: monitoring
-helmCharts:
-  - name: kube-prometheus-stack
-    repo: https://prometheus-community.github.io/helm-charts
-    version: 65.5.1
-    releaseName: kube-prometheus-stack
-    namespace: monitoring
-    valuesFile: ../../../base/monitoring/values.yaml
-    additionalValuesFiles:
-      - values-patch.yaml
 resources:
   - ingress.yaml
