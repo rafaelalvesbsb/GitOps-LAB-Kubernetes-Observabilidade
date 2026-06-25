@@ -2,7 +2,7 @@
 
 > Documento de continuidade. Objetivo: qualquer IA ou desenvolvedor que abra este repositório deve conseguir entender o estado do projeto e continuar o trabalho sem precisar re-perguntar o que já foi decidido.
 >
-> Última atualização: 2026-06-25 (App of Apps completo — **9/9 Applications Synced/Healthy**, todos os 4 endpoints HTTPS validados)
+> Última atualização: 2026-06-25 (App of Apps completo — **9/9 Applications Synced/Healthy**; domínio dev trocado de `local.dev` para `lab.internal` + DNS local via dnsmasq na `mgmt-01`)
 
 ---
 
@@ -79,7 +79,8 @@ GitOps-LAB-Kubernetes-Observabilidade/
 - ✅ Cluster `kubeadm` HA real no ar (6 VMs Hyper-V): 3 control-plane + 2 workers `Ready`, VIP via kube-vip, Calico, `mgmt-01` com kubectl/helm/kustomize/argocd-cli.
 - ✅ ArgoCD instalado (Helm manual, ver seção 7) e **App of Apps completo aplicado**: `argocd/apps/app-of-apps-dev.yaml` → 8 Applications filhas, **todas `Synced/Healthy`**:
   `namespaces-dev`, `storage-dev`, `network-policies-dev`, `cert-manager-dev`, `ingress-nginx-dev`, `monitoring-dev`, `headlamp-dev`, `argocd-ingress-dev`.
-- ✅ 4 endpoints HTTPS validados de ponta a ponta (`curl` com `--resolve`, certificado self-signed do cert-manager, todos via Ingress real): `argocd.local.dev` (200), `dashboard.local.dev` (200), `grafana.local.dev` (302 — redirect normal de login), `prometheus.local.dev` (302).
+- ✅ 4 endpoints HTTPS validados de ponta a ponta via DNS real (não só `curl --resolve`): `argocd.lab.internal` (200), `dashboard.lab.internal` (200), `grafana.lab.internal` (302 — redirect normal de login), `prometheus.lab.internal` (302).
+- ✅ **Domínio dev migrado de `local.dev` para `lab.internal`** — `local.dev` colidia com um serviço público real de terceiros (`.dev` é TLD público da Google); `.internal` é reservado pela IETF (RFC 9476) e nunca será um domínio público. `dnsmasq` rodando na `mgmt-01` (role Ansible `dns-server`) resolve `*.lab.internal` → `192.168.1.108` e repassa todo o resto para o roteador (`192.168.1.1`) — qualquer PC da rede que apontar seu DNS para `192.168.1.105` acessa os serviços do lab sem perder acesso normal à internet.
 - ✅ `local-path-provisioner` como StorageClass default (bare-metal não vem com nenhuma).
 - ✅ NetworkPolicy default-deny + 3 exceções no namespace `apps` (ainda sem nenhuma app real rodando lá — Fase 7/sample-app pendente).
 - ✅ Geração de PDF consolidado da documentação (`claude/docs/pdf/`).
@@ -89,7 +90,7 @@ GitOps-LAB-Kubernetes-Observabilidade/
 - [x] Fase 0/1/2 (substituídas) — cluster kubeadm HA via Ansible.
 - [x] Fase 3 — ArgoCD bootstrap manual.
 - [x] Fase 4 — App of Apps aplicado, 9/9 Applications Synced/Healthy.
-- [x] Fase 5 — DNS local + HTTPS/TLS validados (via `curl --resolve`; `/etc/hosts` real do operador ainda não configurado — ver seção 7).
+- [x] Fase 5 — DNS local + HTTPS/TLS validados. Domínio `lab.internal` (trocado de `local.dev`, que colidia com domínio público real). `dnsmasq` no `mgmt-01` resolve para qualquer PC que configurar seu DNS para `192.168.1.105` — ver `dns/hosts-snippet.txt`.
 - [~] Fase 6 — observabilidade: kube-prometheus-stack rodando com seus dashboards/alertas **padrão do chart**; ainda faltam dashboards/`PrometheusRule` customizados versionados em `observability/` (PodCrashLooping, CertificateExpiringSoon, ArgoCDSyncFailed específicos do PROMPT.md).
 - [ ] Fase 7 — sample-app + pipeline CI completo (GitHub Actions, GHCR, Trivy, cosign) — nada disso existe ainda.
 - [ ] Fase 8 — hardening adicional: Sealed Secrets/External Secrets Operator (zero secrets hoje, mas também zero segredo de app para gerenciar ainda), validação formal de NetworkPolicy com pod de teste.
@@ -162,12 +163,13 @@ Importante para quem for adicionar novos componentes Helm via ArgoCD neste clust
 11. **CRDs (ServiceMonitor/PrometheusRule) usadas por OUTRA Application (ingress-nginx) antes de existirem** — `SkipDryRunOnMissingResource=true` no `syncOptions` evita que o sync falhe permanentemente enquanto a CRD não existe; o `selfHeal` corrige automaticamente assim que a CRD aparece.
 12. **Nomes de Service errados no Ingress do Grafana/Prometheus** — copiados de um plano anterior (`kube-prometheus-stack-*`) que usava `releaseName` fixo via Kustomize; ao migrar para fonte Helm nativa do ArgoCD, o release passou a se chamar `monitoring-dev` (nome da Application), então os Services reais são `monitoring-dev-grafana` e `monitoring-dev-kube-promet-prometheus`. Sempre confirmar `kubectl get svc -n <ns>` antes de escrever o Ingress.
 13. **Truque operacional:** depois de editar `argocd/apps/dev/*.yaml`, é preciso `kubectl patch application app-of-apps-dev -n argocd --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'` para o spec da Application filha atualizar — e depois um sync explícito (`{"operation":{"sync":{"revision":"HEAD","prune":true}}}'`) se a automação não pegar sozinha rápido o suficiente.
+14. **`*.local.dev` colidia com um domínio público real** (`.dev` é TLD público da Google; `local.dev` já está registrado por um serviço de "developer tunnel" de terceiros) — qualquer PC sem override de DNS caía no site deles em vez do Ingress do lab. **Solução:** domínio trocado para `*.lab.internal` (reservado pela IETF, RFC 9476, garantidamente nunca público) em todos os manifests (`infra/overlays/dev/{argocd,argocd-ingress,headlamp,monitoring}/`, `infra/base/argocd/values.yaml`). Para resolver isso em qualquer PC da rede sem acesso ao roteador, criada a role Ansible `dns-server` que instala `dnsmasq` na `mgmt-01`: resolve `*.lab.internal` → `192.168.1.108` e repassa todo o resto para `192.168.1.1` (roteador). Cada PC que precisar acessar configura seu DNS para `192.168.1.105` (ver `dns/hosts-snippet.txt`) — sem isso, não tem mágica que resolva "qualquer PC da rede" automaticamente.
 
 ### Pendente
 
 - Trocar as senhas padrão das VMs por algo seguro / migrar para chave SSH (o acesso por chave já existe para um usuário de automação: `~/.ssh/lab_gitops_key.pub` foi autorizado em `~/.ssh/authorized_keys` de todos os 6 nós).
-- Configurar `/etc/hosts` real (ou DNS) na máquina do operador — hoje a validação foi feita com `curl --resolve`, ver `dns/hosts-snippet.txt`.
 - Deletar o secret `argocd-initial-admin-secret` depois de guardar a senha em outro lugar seguro (recomendação oficial do ArgoCD).
+- Se algum dia houver acesso ao roteador: apontar o DNS do DHCP da rede para `192.168.1.105`, eliminando a necessidade de configurar o DNS manualmente em cada PC.
 
 ---
 
