@@ -1,12 +1,15 @@
 # Namespaces da plataforma. O nível de Pod Security Standard é definido aqui na base
 # como "baseline" (seguro por padrão em qualquer ambiente); o overlay de prod sobrescreve
 # para "restricted" via patch (ver infra/overlays/prod/namespaces/).
+# Exceção deliberada: o controller usa hostNetwork+hostPort (80/443) porque o cluster
+# não tem LoadBalancer cloud nem MetalLB — "baseline" proíbe isso. "privileged" aqui é
+# escopado só a este namespace de infraestrutura, não às apps (que continuam baseline).
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ingress-nginx
   labels:
-    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce: privileged
 ---
 apiVersion: v1
 kind: Namespace

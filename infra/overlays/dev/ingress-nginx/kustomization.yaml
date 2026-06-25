@@ -3,10 +3,12 @@ kind: Kustomization
 resources:
   - ../../../base/ingress-nginx
 patches:
-  # Sem LoadBalancer cloud nem MetalLB no lab: o controller roda como DaemonSet com
-  # hostNetwork nos workers rotulados "ingress-ready=true", ocupando direto as portas
-  # 80/443 dos nós. Ver claude/docs/ARQUITETURA.md seção 5 (cloud-agnostic) — em prod
-  # isso troca para Service type=LoadBalancer.
+  # Sem LoadBalancer cloud nem MetalLB no lab: o controller (Deployment, 2 réplicas)
+  # roda com hostNetwork, fixado via nodeSelector nos 2 workers rotulados
+  # "ingress-ready=true", ocupando direto as portas 80/443 desses nós. Namespace
+  # precisa de PSS "privileged" por causa disso — ver infra/base/namespaces.
+  # Ver claude/docs/ARQUITETURA.md seção 5 (cloud-agnostic) — em prod isso troca para
+  # Service type=LoadBalancer.
   - target:
       kind: Deployment
       name: ingress-nginx-controller
