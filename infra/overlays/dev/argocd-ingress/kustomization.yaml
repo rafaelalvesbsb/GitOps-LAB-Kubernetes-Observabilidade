@@ -1,0 +1,7 @@
+# Ingress/Certificate do próprio ArgoCD, separados do Helm release dele (que continua
+# sendo gerenciado manualmente — ver claude/docs/AMBIENTE-E-IMPLEMENTACAO.md). Mantido
+# como Application GitOps própria para não precisar reaplicar isso manualmente também.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ingress.yaml
