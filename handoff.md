@@ -84,6 +84,28 @@ GitOps-LAB-Kubernetes-Observabilidade/
 - ✅ `local-path-provisioner` como StorageClass default (bare-metal não vem com nenhuma).
 - ✅ NetworkPolicy default-deny + 3 exceções no namespace `apps` (ainda sem nenhuma app real rodando lá — Fase 7/sample-app pendente).
 - ✅ Geração de PDF consolidado da documentação (`claude/docs/pdf/`).
+- ✅ **Credencial padronizada (`admin` / mesma senha simples padrão do lab) em todos os serviços** — ver seção 4.1.
+
+### 4.1 Credenciais de acesso
+
+| Serviço | URL | Usuário | Senha |
+|---|---|---|---|
+| ArgoCD | `https://argocd.lab.internal` | `admin` | senha padrão do lab (mesma das VMs) |
+| Grafana | `https://grafana.lab.internal` | `admin` | senha padrão do lab |
+| Prometheus | `https://prometheus.lab.internal` | `admin` | senha padrão do lab (Basic Auth no Ingress — Prometheus não tem login nativo) |
+| Headlamp | `https://dashboard.lab.internal` | `admin` | senha padrão do lab (Basic Auth no Ingress, **além** do token de ServiceAccount usado por dentro da UI) |
+
+A senha não é escrita aqui em texto puro (este repositório é público no GitHub) — é a mesma senha simples já usada nas 6 VMs do lab. Os secrets de Basic Auth (`prometheus-basic-auth`, `headlamp-basic-auth`) foram aplicados direto no cluster via `kubectl`, **nunca commitados no Git** (princípio do projeto: zero segredo em texto puro no repositório). Para recriá-los após um `kubectl delete`:
+
+```bash
+HASH=$(openssl passwd -apr1 <senha>)
+echo "admin:$HASH" > /tmp/auth-htpasswd
+kubectl create secret generic prometheus-basic-auth -n monitoring --from-file=auth=/tmp/auth-htpasswd
+kubectl create secret generic headlamp-basic-auth -n dashboard --from-file=auth=/tmp/auth-htpasswd
+rm -f /tmp/auth-htpasswd
+```
+
+Para trocar a senha do ArgoCD: `argocd account bcrypt --password <senha>` (rodar na `mgmt-01`, que já tem o CLI) e usar o hash gerado para patchar `kubectl -n argocd patch secret argocd-secret -p '{"stringData":{"admin.password":"<hash>","admin.passwordMtime":"'$(date +%FT%T%Z)'"}}'`. Para o Grafana: `kubectl exec -n monitoring deploy/monitoring-dev-grafana -c grafana -- grafana cli admin reset-admin-password <senha>`.
 
 ## 5. Funcionalidades Pendentes
 
