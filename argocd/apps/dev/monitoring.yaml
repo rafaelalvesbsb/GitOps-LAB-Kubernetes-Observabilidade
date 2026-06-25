@@ -21,3 +21,8 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      # CRDs (ServiceMonitor/PrometheusRule) e os recursos que as usam vêm juntos no
+      # mesmo chart — sem isso, o primeiro sync falha porque a CRD ainda não existe
+      # no momento do dry-run. selfHeal corrige no próximo ciclo de qualquer forma,
+      # mas isso evita o erro/retry inicial.
+      - SkipDryRunOnMissingResource=true
