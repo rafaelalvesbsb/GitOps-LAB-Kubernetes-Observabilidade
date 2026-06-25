@@ -1,5 +1,12 @@
 # Valores comuns (cloud-agnostic). O que muda por ambiente vive no overlay.
 controller:
+  # O webhook de validação depende de Jobs com hooks do Helm (pre/post-install) para
+  # gerar e aplicar o certificado TLS — o ArgoCD interpreta esses hooks de um jeito que
+  # não bate com o ciclo de vida real do Helm (cert fica desincronizado do CA aplicado
+  # no webhook). Desabilitar é a solução recomendada para ArgoCD + ingress-nginx; não é
+  # crítico para o lab (só valida sintaxe de annotations específicas do nginx).
+  admissionWebhooks:
+    enabled: false
   metrics:
     enabled: true
     serviceMonitor:
