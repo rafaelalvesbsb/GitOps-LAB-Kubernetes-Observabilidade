@@ -1,0 +1,8 @@
+# StorageClass dinâmica para o lab: bare-metal kubeadm não vem com nenhum provisioner.
+# local-path-provisioner (Rancher) cria PVs como hostPath no nó onde o pod roda — ok
+# para dev (1 réplica, sem precisar mover dados entre nós). Em prod, troca para a
+# StorageClass dinâmica real do provider (ver claude/docs/ARQUITETURA.md seção 6).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.30/deploy/local-path-storage.yaml
