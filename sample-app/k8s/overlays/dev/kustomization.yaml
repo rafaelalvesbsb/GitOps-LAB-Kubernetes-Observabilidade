@@ -10,4 +10,4 @@ resources:
 images:
 - name: ghcr.io/rafaelalvesbsb/sample-app
   newName: ghcr.io/rafaelalvesbsb/sample-app
-  newTag: a56fd4c03daa7c82da29096501e35c9908f3a083
+  newTag: 4169d06ae81d363303d82569e9a525c9c5161148
