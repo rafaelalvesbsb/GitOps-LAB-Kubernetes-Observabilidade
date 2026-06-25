@@ -16,7 +16,8 @@ controller:
       cpu: 100m
       memory: 128Mi
     limits:
-      memory: 256Mi
+      # 256Mi era pouco: OOMKilled em produção real com 4 hosts/TLS configurados.
+      memory: 512Mi
   config:
     hsts: "true"
     ssl-redirect: "true"
