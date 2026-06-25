@@ -1,3 +1,4 @@
+// sample-app: serviço HTTP mínimo usado para validar o pipeline de CI/CD (Fase 7).
 package main
 
 import (
