@@ -1,0 +1,29 @@
+---
+# DNS local para o domínio do lab (*.lab.internal). Sem acesso ao roteador da rede para
+# apontar o DNS de todos os dispositivos automaticamente — cada PC que precisar acessar
+# os serviços do lab configura seu próprio DNS para apontar para esta VM (mgmt-01). Ver
+# dns/hosts-snippet.txt para instruções por sistema operacional.
+- name: Instalar dnsmasq
+  shell: sudo -S apt-get update -qq && sudo -S apt-get install -y -qq dnsmasq
+  args:
+    stdin: "{{ ansible_become_password }}\n{{ ansible_become_password }}\n"
+  changed_when: true
+
+- name: Renderizar config do dnsmasq para o domínio do lab
+  template:
+    src: dnsmasq-lab.conf.j2
+    dest: "{{ ansible_env.HOME }}/.bootstrap/dnsmasq-lab.conf"
+    mode: "0644"
+  vars:
+    lab_domain: "{{ dns_lab_domain }}"
+    ingress_ip: "{{ dns_ingress_ip }}"
+    upstream_dns: "{{ dns_upstream }}"
+
+- name: Instalar config em /etc/dnsmasq.d/ e reiniciar o serviço
+  shell: |
+    sudo -S cp {{ ansible_env.HOME }}/.bootstrap/dnsmasq-lab.conf /etc/dnsmasq.d/lab-internal.conf
+    sudo -S systemctl restart dnsmasq
+    sudo -S systemctl enable dnsmasq
+  args:
+    stdin: "{{ ansible_become_password }}\n{{ ansible_become_password }}\n{{ ansible_become_password }}\n"
+  changed_when: true

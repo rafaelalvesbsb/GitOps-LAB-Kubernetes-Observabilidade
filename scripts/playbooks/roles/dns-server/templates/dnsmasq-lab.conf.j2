@@ -1,0 +1,17 @@
+# Gerado via Ansible (roles/dns-server) — não editar manualmente.
+# Resolve *.{{ lab_domain }} para o ingress-nginx; repassa qualquer outro domínio para
+# o roteador, então PCs que usarem este DNS continuam navegando na internet normal.
+
+# Só escuta na interface da LAN — evita conflito com o stub resolver do systemd-resolved
+# (127.0.0.53), que continua cuidando da resolução da própria mgmt-01.
+listen-address={{ ansible_default_ipv4.address }}
+bind-interfaces
+port=53
+
+# Wildcard: qualquer coisa.{{ lab_domain }} -> IP do ingress-nginx
+address=/{{ lab_domain }}/{{ ingress_ip }}
+
+# Upstream para todo o resto (não cachear localmente, deixar o roteador decidir)
+server={{ upstream_dns }}
+no-resolv
+cache-size=150

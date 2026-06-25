@@ -1,11 +1,31 @@
-# Adicione este bloco ao /etc/hosts (Linux/Mac) ou C:\Windows\System32\drivers\etc\hosts
-# (Windows, como Administrador) da máquina de onde você vai abrir o navegador.
+# Domínio do lab: *.lab.internal (".internal" é reservado pela IETF — RFC 9476 — para
+# redes privadas, nunca será um domínio público real. NÃO use ".local.dev": ".dev" é um
+# TLD público real da Google e "local.dev" já está registrado por um serviço de
+# terceiros — qualquer PC sem override de DNS cai no site deles, não no seu Ingress.)
 #
-# <IP> = IP de qualquer worker rotulado "ingress-ready=true" (lab05 ou lab06) — o
-# ingress-nginx roda como DaemonSet com hostNetwork nesses nós (ver
-# infra/overlays/dev/ingress-nginx/kustomization.yaml).
+# Sem acesso ao roteador para apontar o DNS da rede inteira para a mgmt-01, cada PC que
+# precisar acessar os serviços do lab precisa de UMA das duas opções abaixo.
 
-192.168.1.108 argocd.local.dev
-192.168.1.108 grafana.local.dev
-192.168.1.108 prometheus.local.dev
-192.168.1.108 dashboard.local.dev
+# ----------------------------------------------------------------------------
+# OPÇÃO A — Editar o arquivo hosts do PC (simples, mas só cobre os nomes daqui)
+# Linux/Mac: /etc/hosts (sudo) | Windows: C:\Windows\System32\drivers\etc\hosts (Admin)
+# ----------------------------------------------------------------------------
+192.168.1.108 argocd.lab.internal
+192.168.1.108 grafana.lab.internal
+192.168.1.108 prometheus.lab.internal
+192.168.1.108 dashboard.lab.internal
+
+# ----------------------------------------------------------------------------
+# OPÇÃO B (recomendada) — Apontar o DNS do PC para a mgmt-01 (dnsmasq)
+# Resolve automaticamente QUALQUER novo serviço *.lab.internal adicionado depois,
+# sem precisar editar hosts de novo. Configurar uma vez por PC:
+#
+# Windows: Painel de Controle > Rede > Propriedades do adaptador > IPv4 >
+#          "Usar o seguinte endereço de servidor DNS" > 192.168.1.105
+# Linux:   editar /etc/resolv.conf (ou NetworkManager) apontando para 192.168.1.105
+# Mac:     Preferências do Sistema > Rede > Avançado > DNS > adicionar 192.168.1.105
+#
+# A mgmt-01 (192.168.1.105) roda dnsmasq: resolve *.lab.internal para o ingress-nginx
+# (192.168.1.108/109) e repassa qualquer outro domínio para o DNS público normal — não
+# quebra o acesso à internet do PC.
+# ----------------------------------------------------------------------------

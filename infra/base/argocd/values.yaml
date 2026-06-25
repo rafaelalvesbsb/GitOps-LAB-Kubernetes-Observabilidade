@@ -2,7 +2,7 @@
 # O que muda por ambiente vive em infra/overlays/<env>/argocd/values-patch.yaml.
 # Chart: https://github.com/argoproj/argo-helm (argo-cd)
 global:
-  domain: argocd.local.dev
+  domain: argocd.lab.internal
 
 configs:
   cm:

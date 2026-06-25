@@ -2,12 +2,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: argocd-local-dev-tls
+  name: argocd-lab-internal-tls
   namespace: argocd
 spec:
-  secretName: argocd-local-dev-tls
+  secretName: argocd-lab-internal-tls
   dnsNames:
-    - argocd.local.dev
+    - argocd.lab.internal
   issuerRef:
     name: selfsigned-issuer
     kind: ClusterIssuer
@@ -24,10 +24,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - argocd.local.dev
-      secretName: argocd-local-dev-tls
+        - argocd.lab.internal
+      secretName: argocd-lab-internal-tls
   rules:
-    - host: argocd.local.dev
+    - host: argocd.lab.internal
       http:
         paths:
           - path: /

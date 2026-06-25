@@ -1,7 +1,7 @@
 # sync-wave 1: roda DEPOIS do chart do cert-manager (wave 0 implícita) — precisa das
 # CRDs (ClusterIssuer) já registradas no cluster antes de existir.
 # ClusterIssuer é cluster-scoped (sem namespace) — qualquer namespace pode referenciá-lo.
-# Cada app emite seu próprio Certificate "*.local.dev" no seu próprio namespace, porque
+# Cada app emite seu próprio Certificate "*.lab.internal" no seu próprio namespace, porque
 # o segredo TLS de um Ingress precisa estar no mesmo namespace do Ingress.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer

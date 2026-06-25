@@ -41,3 +41,8 @@
   hosts: mgmt
   roles:
     - mgmt-tools
+
+- name: DNS local do lab (*.lab.internal -> ingress-nginx) no bastion (mgmt-01)
+  hosts: mgmt
+  roles:
+    - dns-server

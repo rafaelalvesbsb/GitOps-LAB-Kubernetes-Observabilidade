@@ -1,12 +1,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: dashboard-local-dev-tls
+  name: dashboard-lab-internal-tls
   namespace: dashboard
 spec:
-  secretName: dashboard-local-dev-tls
+  secretName: dashboard-lab-internal-tls
   dnsNames:
-    - dashboard.local.dev
+    - dashboard.lab.internal
   issuerRef:
     name: selfsigned-issuer
     kind: ClusterIssuer
@@ -21,10 +21,10 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - hosts: [dashboard.local.dev]
-      secretName: dashboard-local-dev-tls
+    - hosts: [dashboard.lab.internal]
+      secretName: dashboard-lab-internal-tls
   rules:
-    - host: dashboard.local.dev
+    - host: dashboard.lab.internal
       http:
         paths:
           - path: /
