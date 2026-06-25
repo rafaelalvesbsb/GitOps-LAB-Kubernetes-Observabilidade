@@ -1,0 +1,10 @@
+# kubeadm: certificado do kubelet não é assinado por uma CA que o metrics-server
+# confia por padrão. --kubelet-insecure-tls é o ajuste padrão para clusters kubeadm
+# (em prod com cluster gerenciado, normalmente não é necessário).
+defaultArgs:
+  - --cert-dir=/tmp
+  - --secure-port=10250
+  - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+  - --kubelet-use-node-status-port
+  - --metric-resolution=15s
+  - --kubelet-insecure-tls

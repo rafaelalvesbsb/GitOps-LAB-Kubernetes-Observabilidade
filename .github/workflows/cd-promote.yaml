@@ -1,0 +1,51 @@
+name: Promote sample-app to prod
+
+# Disparo manual (Actions -> "Promote sample-app to prod" -> Run workflow), nunca
+# automático — promoção pra prod exige decisão humana de qual versão promover.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Tag da imagem (sha) já validada em dev a promover para prod"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/sample-app
+
+jobs:
+  promote-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+      - name: Atualizar tag da imagem no overlay prod
+        working-directory: sample-app/k8s/overlays/prod
+        run: kustomize edit set image "${{ env.IMAGE }}=${{ env.IMAGE }}:${{ inputs.image_tag }}"
+
+      # SEM auto-merge: este PR precisa de revisão e aprovação manual antes do merge —
+      # é a própria definição de "promoção pra prod" (ver claude/docs/ARQUITETURA.md
+      # seção 3 e claude/PROMPT.md seção 6).
+      - name: Abrir PR de promoção para prod
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ci/promote-prod-${{ inputs.image_tag }}
+          commit-message: "ci: promote sample-app to ${{ inputs.image_tag }} (prod)"
+          title: "Promote sample-app to ${{ inputs.image_tag }} (prod)"
+          body: |
+            Promoção dev → prod da imagem `${{ env.IMAGE }}:${{ inputs.image_tag }}`.
+
+            **Requer aprovação manual antes do merge.** Depois do merge, o ArgoCD do
+            cluster de prod (quando existir) sincroniza automaticamente.
+          labels: promotion,needs-review

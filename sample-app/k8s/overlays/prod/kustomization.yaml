@@ -1,0 +1,20 @@
+# Fase 11 (claude/docs/GUIA-DE-IMPLEMENTACAO.md): overlay de prod não é implantado
+# neste lab (não há cluster de prod real) — só precisa renderizar corretamente via
+# `kubectl kustomize`, validando que o diff dev↔prod é pequeno e legível (ver
+# claude/docs/ARQUITETURA.md seção 6).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: apps
+resources:
+  - ../../base
+patches:
+  - target:
+      kind: Deployment
+      name: sample-app
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+images:
+  - name: ghcr.io/rafaelalvesbsb/sample-app
+    newTag: latest
